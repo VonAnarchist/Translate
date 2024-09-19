@@ -1,6 +1,3 @@
-// Example Enmity plugin for translating text in Discord messages
-// This example uses LibreTranslate API for simplicity
-
 // Define the plugin metadata
 module.exports = {
     name: "Translate Plugin",
