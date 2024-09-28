@@ -1,57 +1,54 @@
-// Define the plugin metadata
-module.exports = {
-    name: "Translate Plugin",
-    description: "Translates selected text to the desired language",
-    version: "1.0.0",
-    author: "vonanarchist",
-};
+const { Plugin, Library } = Enmity;
+const { Toasts, Patcher, React, Settings, Components } = Library;
 
-// Import necessary libraries from Enmity
-const { registerCommand } = require("enmity/commands");
-const { sendMessage } = require("enmity/messages");
-const fetch = require("enmity/fetch"); // For making HTTP requests
+class TranslatorPlugin {
+    onStart() {
+        Toasts.show("Translator Plugin Started", Toasts.Type.SUCCESS);
 
-// Register the command to translate text
-registerCommand({
-    name: "translate",
-    description: "Translate the selected text",
-    options: [
-        {
-            name: "text",
-            description: "Text to translate",
-            type: 3, // Type 3 is for string input
-            required: true
-        },
-        {
-            name: "targetLang",
-            description: "Language code to translate to (e.g., en, es, fr)",
-            type: 3,
-            required: true
-        }
-    ],
-    execute: async (args, context) => {
-        const textToTranslate = args[0].value;
-        const targetLang = args[1].value;
+        this.addTranslateButton();
+    }
 
-        // Call LibreTranslate API (or any other translation API)
-        const url = `https://libretranslate.com/translate`;
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                q: textToTranslate,
-                target: targetLang,
-            }),
+    onStop() {
+        Patcher.unpatchAll();
+        Toasts.show("Translator Plugin Stopped", Toasts.Type.DANGER);
+    }
+
+    addTranslateButton() {
+        // Adding a translate button to the message context menu using Enmity's patching system
+        Patcher.after('MessageContextMenu', 'default', (_, args, returnValue) => {
+            const [props] = args;
+
+            if (!props.message || !props.channel) return;
+
+            returnValue.props.children.push(
+                React.createElement(Components.ContextMenuItem, {
+                    label: 'Translate Message',
+                    onPress: () => this.translateMessage(props.message)
+                })
+            );
         });
+    }
 
-        const data = await response.json();
+    translateMessage(message) {
+        // Placeholder translation logic (reverse message content)
+        const translatedText = message.content.split('').reverse().join('');
+        Toasts.show(`Translated: ${translatedText}`, Toasts.Type.INFO);
+    }
 
-        // Check if translation was successful
-        if (data && data.translatedText) {
-            // Send the translated text as a message
-            sendMessage(context.channel.id, `Translated Text: ${data.translatedText}`);
-        } else {
-            sendMessage(context.channel.id, "Translation failed. Please try again.");
-        }
-    },
-});
+    getSettingsPanel() {
+        return (
+            React.createElement(Components.SettingsPanel, {
+                children: [
+                    React.createElement(Components.Text, { variant: 'heading-lg', children: 'Translator Settings' }),
+                    React.createElement(Components.SwitchItem, {
+                        label: 'Enable Translate Button',
+                        value: true,
+                        onValueChange: (value) => Toasts.show(`Translate Button ${value ? 'Enabled' : 'Disabled'}`, Toasts.Type.INFO)
+                    })
+                ]
+            })
+        );
+    }
+}
+
+module.exports = new TranslatorPlugin();
