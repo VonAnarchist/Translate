@@ -1,0 +1,7 @@
+{
+  "name": "TranslatorPlugin",
+  "description": "A plugin to translate messages",
+  "version": "1.0.0",
+  "author": "YourName",
+  "source": "https://github.com/YourName/translator-plugin"
+}
